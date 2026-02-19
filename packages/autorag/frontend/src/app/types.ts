@@ -27,3 +27,22 @@ export type NamespaceKind = {
   name: string;
   displayName?: string;
 };
+
+export type PipelineDefinition = {
+  id: string;
+  name: string;
+  created_at: string;
+  description?: string;
+};
+
+export type PipelineRun = {
+  id: string;
+  name: string;
+  description?: string;
+  tags?: string[];
+  stats?: string;
+  pipeline_id: string;
+  pipeline_name: string;
+  status: string;
+  created_at: string;
+};
