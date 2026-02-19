@@ -2,24 +2,30 @@ import React from 'react';
 import { useNamespaceSelector } from 'mod-arch-core';
 import ApplicationsPage from '@odh-dashboard/internal/pages/ApplicationsPage';
 import { AutoRagRunsTable } from '~/app/components/AutoRagRunsTable';
+import { useAutoragMockPipelines } from '~/app/hooks/useAutoragMockPipelines';
 import { usePipelineDefinitions } from '~/app/hooks/usePipelineDefinitions';
 import { usePipelineRuns } from '~/app/hooks/usePipelineRuns';
+
+const MOCK_FALLBACK_NAMESPACE = 'default';
 
 const MainPage: React.FC = () => {
   const { preferredNamespace } = useNamespaceSelector();
   const namespace = preferredNamespace?.name ?? '';
+  const [useMock] = useAutoragMockPipelines();
+  // When mock mode is on and no namespace is selected, use fallback so mock data can load
+  const effectiveNamespace = useMock && !namespace ? MOCK_FALLBACK_NAMESPACE : namespace;
   const {
     pipelineDefinitions,
     loaded: defsLoaded,
     error: defsError,
     refresh: refreshDefs,
-  } = usePipelineDefinitions(namespace);
+  } = usePipelineDefinitions(effectiveNamespace);
   const {
     runs,
     loaded: runsLoaded,
     error: runsError,
     refresh: refreshRuns,
-  } = usePipelineRuns(namespace, pipelineDefinitions);
+  } = usePipelineRuns(effectiveNamespace, pipelineDefinitions);
 
   const loaded = defsLoaded && runsLoaded;
   const loadError = defsError ?? runsError;
@@ -41,7 +47,14 @@ const MainPage: React.FC = () => {
       provideChildrenPadding
       removeChildrenTopPadding
     >
-      {hasRuns && <AutoRagRunsTable runs={runs} namespace={namespace} refresh={refresh} />}
+      {hasRuns && (
+        <AutoRagRunsTable
+          runs={runs}
+          namespace={effectiveNamespace}
+          useMock={useMock}
+          refresh={refresh}
+        />
+      )}
     </ApplicationsPage>
   );
 };

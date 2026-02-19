@@ -11,10 +11,16 @@ import RunDetailPlaceholderModal from './RunDetailPlaceholderModal';
 type AutoRagRunsTableProps = {
   runs: PipelineRun[];
   namespace: string;
+  useMock: boolean;
   refresh: () => Promise<void>;
 };
 
-const AutoRagRunsTable: React.FC<AutoRagRunsTableProps> = ({ runs, namespace, refresh }) => {
+const AutoRagRunsTable: React.FC<AutoRagRunsTableProps> = ({
+  runs,
+  namespace,
+  useMock,
+  refresh,
+}) => {
   const [detailRun, setDetailRun] = React.useState<PipelineRun | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<PipelineRun | null>(null);
 
@@ -22,9 +28,9 @@ const AutoRagRunsTable: React.FC<AutoRagRunsTableProps> = ({ runs, namespace, re
     if (!runToDelete) {
       return;
     }
-    await deletePipelineRun('', namespace, runToDelete.id);
+    await deletePipelineRun(useMock, '', namespace, runToDelete.id);
     await refresh();
-  }, [namespace, runToDelete, refresh]);
+  }, [namespace, runToDelete, refresh, useMock]);
 
   return (
     <>

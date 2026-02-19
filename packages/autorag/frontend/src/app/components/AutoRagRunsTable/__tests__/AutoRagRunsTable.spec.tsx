@@ -69,13 +69,13 @@ describe('AutoRagRunsTable', () => {
   });
 
   it('should render table with runs', () => {
-    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" refresh={mockRefresh} />);
+    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" useMock refresh={mockRefresh} />);
 
     expect(screen.getByTestId('autorag-runs-table')).toBeInTheDocument();
   });
 
   it('should render run names as clickable buttons', () => {
-    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" refresh={mockRefresh} />);
+    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" useMock refresh={mockRefresh} />);
 
     expect(screen.getByTestId('run-name-r1')).toHaveTextContent('Run One');
     expect(screen.getByTestId('run-name-r2')).toHaveTextContent('Run Two');
@@ -83,7 +83,7 @@ describe('AutoRagRunsTable', () => {
 
   it('should open detail placeholder modal when run name is clicked', async () => {
     const user = userEvent.setup();
-    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" refresh={mockRefresh} />);
+    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" useMock refresh={mockRefresh} />);
 
     await user.click(screen.getByTestId('run-name-r1'));
 
@@ -93,7 +93,7 @@ describe('AutoRagRunsTable', () => {
 
   it('should open delete modal when delete button is clicked', async () => {
     const user = userEvent.setup();
-    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" refresh={mockRefresh} />);
+    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" useMock refresh={mockRefresh} />);
 
     await user.click(screen.getByTestId('delete-run-r1'));
 
@@ -106,12 +106,12 @@ describe('AutoRagRunsTable', () => {
     deleteMock.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" refresh={mockRefresh} />);
+    render(<AutoRagRunsTable runs={mockRuns} namespace="my-ns" useMock refresh={mockRefresh} />);
 
     await user.click(screen.getByTestId('delete-run-r1'));
     await user.click(screen.getByRole('button', { name: /delete/i }));
 
-    expect(deleteMock).toHaveBeenCalledWith('', 'my-ns', 'r1');
+    expect(deleteMock).toHaveBeenCalledWith(true, '', 'my-ns', 'r1');
     expect(mockRefresh).toHaveBeenCalled();
   });
 });

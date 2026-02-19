@@ -2,6 +2,7 @@ import { useFetchState, FetchStateCallbackPromise } from 'mod-arch-core';
 import React from 'react';
 import { getPipelineRuns } from '~/app/api/pipelines';
 import type { PipelineDefinition, PipelineRun } from '~/app/types';
+import { useAutoragMockPipelines } from './useAutoragMockPipelines';
 
 export function usePipelineRuns(
   namespace: string,
@@ -12,6 +13,7 @@ export function usePipelineRuns(
   error: Error | undefined;
   refresh: () => Promise<void>;
 } {
+  const [useMock] = useAutoragMockPipelines();
   const pipelineIds = React.useMemo(
     () => pipelineDefinitions.map((p) => p.id),
     [pipelineDefinitions],
@@ -23,10 +25,10 @@ export function usePipelineRuns(
         if (!namespace || pipelineIds.length === 0) {
           return [];
         }
-        return getPipelineRuns('', namespace, pipelineIds);
+        return getPipelineRuns(useMock, '', namespace, pipelineIds);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- pipelineIds from useMemo, stable when pipelineDefinitions unchanged
-      [namespace, pipelineIds.join(',')],
+      [namespace, pipelineIds.join(','), useMock],
     ),
     [],
   );

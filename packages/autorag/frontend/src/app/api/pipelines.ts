@@ -5,9 +5,8 @@ import {
   deleteMockPipelineRun,
 } from '~/app/api/pipelinesMock';
 
-const useMock = process.env.MOCK_PIPELINES !== 'false';
-
 export async function getPipelineDefinitions(
+  useMock: boolean,
   _hostPath: string,
   namespace: string,
 ): Promise<PipelineDefinition[]> {
@@ -20,6 +19,7 @@ export async function getPipelineDefinitions(
 }
 
 export async function getPipelineRuns(
+  useMock: boolean,
   _hostPath: string,
   namespace: string,
   pipelineIds: string[],
@@ -32,6 +32,7 @@ export async function getPipelineRuns(
 }
 
 export async function deletePipelineRun(
+  useMock: boolean,
   _hostPath: string,
   namespace: string,
   runId: string,
