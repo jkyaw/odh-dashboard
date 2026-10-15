@@ -3,7 +3,7 @@ import {
   SupportedArea,
   type SupportedAreaType,
 } from '@odh-dashboard/plugin-core/areas';
-import { SupportedAreasStateMap } from '#~/concepts/areas/const';
+import { definedFeatureFlags, SupportedAreasStateMap } from '#~/concepts/areas/const';
 
 describe('Verify const stability', () => {
   const computeTestFunc = (map: Partial<typeof SupportedAreasStateMap>) => {
@@ -58,13 +58,18 @@ describe('Verify const stability', () => {
 
   it('should define AutoML and AutoRAG area availability requirements', () => {
     expect(SupportedAreasStateMap[SupportedArea.PLUGIN_AUTOML]).toEqual({
-      featureFlags: ['automl', 'disablePipelines'],
+      featureFlags: ['disablePipelines'],
       requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
     });
     expect(SupportedAreasStateMap[SupportedArea.PLUGIN_AUTORAG]).toEqual({
-      featureFlags: ['autorag', 'disablePipelines'],
+      featureFlags: ['disablePipelines'],
       requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
       reliantAreas: [SupportedArea.PLUGIN_GEN_AI],
     });
+  });
+
+  it('should not expose the legacy AutoX flags as dashboard feature flags', () => {
+    expect(definedFeatureFlags).not.toContain('automl');
+    expect(definedFeatureFlags).not.toContain('autorag');
   });
 });

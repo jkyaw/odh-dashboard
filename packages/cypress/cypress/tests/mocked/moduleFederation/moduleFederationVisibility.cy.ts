@@ -27,9 +27,9 @@ const initIntercepts = (
 
 describe('Module federation visibility', () => {
   describe('Module present — nav and route accessible', () => {
-    it('should show AutoML nav and render route when flag and DSC are enabled', () => {
+    it('should show AutoML nav and render route when its legacy flag is false', () => {
       initIntercepts(
-        { automl: true },
+        { automl: false },
         { [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' } },
       );
       navSidebar.visit();
@@ -58,9 +58,9 @@ describe('Module federation visibility', () => {
       pageNotfound.findPage().should('not.exist');
     });
 
-    it('should show AutoRAG navigation and task shortcuts without preview labels', () => {
+    it('should show AutoRAG navigation and task shortcuts when its legacy flag is false', () => {
       initIntercepts(
-        { autorag: true, genAiStudio: true },
+        { autorag: false, genAiStudio: true },
         { [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' } },
       );
 
@@ -102,12 +102,15 @@ describe('Module federation visibility', () => {
   });
 
   describe('Module absent — nav hidden and route shows not-found', () => {
-    it('should hide AutoML nav and show 404 on route when flag is disabled', () => {
+    it('should hide AutoML nav and show 404 on route when pipelines are disabled', () => {
       // The MF host loads remoteEntry.js and extensions for every remote regardless of feature
       // flags — flag filtering happens after load — so only the module's API requests are
       // meaningful to assert on here.
       cy.intercept({ pathname: '/automl/api/**' }, { statusCode: 404 }).as('automlApiRequests');
-      initIntercepts({ automl: false });
+      initIntercepts(
+        { automl: false, disablePipelines: true },
+        { [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' } },
+      );
       navSidebar.visit();
       navSidebar
         .findNavItem({ name: 'AutoML', rootSection: 'Develop & train' })
@@ -125,13 +128,13 @@ describe('Module federation visibility', () => {
       pageNotfound.findPage().should('exist');
     });
 
-    it('should hide AutoRAG nav and show 404 on route when flag is disabled', () => {
+    it('should hide AutoRAG nav and show 404 on route when pipelines are disabled', () => {
       // The MF host loads remoteEntry.js and extensions for every remote regardless of feature
       // flags — flag filtering happens after load — so only the module's API requests are
       // meaningful to assert on here.
       cy.intercept({ pathname: '/autorag/api/**' }, { statusCode: 404 }).as('autoragApiRequests');
       initIntercepts(
-        { autorag: false, genAiStudio: true },
+        { autorag: false, genAiStudio: true, disablePipelines: true },
         { [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' } },
       );
 
@@ -162,17 +165,20 @@ describe('Module federation visibility', () => {
   });
 
   describe('Mixed state — some modules present, others absent', () => {
-    it('should show enabled modules and hide disabled ones simultaneously', () => {
-      initIntercepts({
-        genAiStudio: true,
-        automl: false,
-        disableFeatureStore: true,
-      });
+    it('should show AutoX modules with false legacy flags and hide disabled modules', () => {
+      initIntercepts(
+        {
+          genAiStudio: true,
+          automl: false,
+          autorag: false,
+          disableFeatureStore: true,
+        },
+        { [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' } },
+      );
       navSidebar.visit();
       navSidebar.findNavSection('Gen AI studio').should('exist');
-      navSidebar
-        .findNavItem({ name: 'AutoML', rootSection: 'Develop & train' })
-        .should('not.exist');
+      navSidebar.findNavItem({ name: 'AutoML', rootSection: 'Develop & train' }).should('exist');
+      navSidebar.findNavItem({ name: 'AutoRAG', rootSection: 'Gen AI studio' }).should('exist');
       navSidebar
         .findNavItem({
           name: 'Feature views',

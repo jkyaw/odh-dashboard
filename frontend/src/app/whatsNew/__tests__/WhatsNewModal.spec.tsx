@@ -219,8 +219,8 @@ describe('WhatsNewModal', () => {
       expect(screen.queryByText(/OdhDashboardConfig/)).not.toBeInTheDocument();
     });
 
-    it('should not show any unavailability message when all step features are enabled', () => {
-      useAppContextMock.mockReturnValue(buildAppContext({ automl: true }));
+    it('should use AutoML area availability instead of the legacy flag', () => {
+      useAppContextMock.mockReturnValue(buildAppContext({ automl: false }));
       useUserMock.mockReturnValue(adminUser);
 
       render(<WhatsNewModal />);

@@ -623,92 +623,92 @@ describe('isAreaAvailable', () => {
   });
 
   describe('Plugin module areas', () => {
-    const PLUGIN_AUTOML = 'plugin-automl';
     const PLUGIN_GEN_AI = 'plugin-gen-ai';
     const PLUGIN_FEATURE_STORE = 'plugin-feature-store';
 
-    describe('AutoML', () => {
-      const stateMap = {
-        [PLUGIN_AUTOML]: {
-          featureFlags: ['automl' as const, 'disablePipelines' as const],
-          requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
+    describe('AutoML and AutoRAG', () => {
+      const dscStatus = mockDscStatus({
+        components: {
+          [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' },
         },
-      };
+      });
 
-      it('should enable when automl flag is true and DS_PIPELINES is Managed', () => {
+      it('should keep AutoML available when its legacy flag is false', () => {
         const result = isAreaAvailable(
-          PLUGIN_AUTOML,
-          mockDashboardConfig({ automl: true }).spec,
-          mockDscStatus({
-            components: {
-              [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' },
-            },
-          }),
+          SupportedArea.PLUGIN_AUTOML,
+          mockDashboardConfig({ automl: false, disablePipelines: false }).spec,
+          dscStatus,
           null,
-          { internalStateMap: stateMap, flagState: { automl: true, disablePipelines: false } },
         );
 
         expect(result.status).toBe(true);
-        expect(result.featureFlags).toEqual({ automl: 'on', disablePipelines: 'on' });
+        expect(result.featureFlags).toEqual({ disablePipelines: 'on' });
         expect(result.requiredComponents).toEqual({
           [DataScienceStackComponent.DS_PIPELINES]: true,
         });
       });
 
-      it('should disable when automl flag is false', () => {
+      it('should keep AutoRAG available when its legacy flag is false and Gen AI is enabled', () => {
         const result = isAreaAvailable(
-          PLUGIN_AUTOML,
-          mockDashboardConfig({ automl: false }).spec,
-          mockDscStatus({
-            components: {
-              [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' },
-            },
-          }),
+          SupportedArea.PLUGIN_AUTORAG,
+          mockDashboardConfig({
+            autorag: false,
+            genAiStudio: true,
+            disablePipelines: false,
+          }).spec,
+          dscStatus,
           null,
-          { internalStateMap: stateMap, flagState: { automl: false, disablePipelines: false } },
+        );
+
+        expect(result.status).toBe(true);
+        expect(result.featureFlags).toEqual({ disablePipelines: 'on' });
+      });
+
+      it('should keep AutoRAG hidden when Gen AI Studio is unavailable', () => {
+        const result = isAreaAvailable(
+          SupportedArea.PLUGIN_AUTORAG,
+          mockDashboardConfig({
+            autorag: false,
+            genAiStudio: false,
+            disablePipelines: false,
+          }).spec,
+          dscStatus,
+          null,
         );
 
         expect(result.status).toBe(false);
-        expect(result.featureFlags).toEqual({ automl: 'off', disablePipelines: 'on' });
       });
 
-      it('should disable when automl flag is true but DS_PIPELINES is Removed', () => {
+      it('should hide AutoML and AutoRAG when pipelines are disabled or unavailable', () => {
+        const config = mockDashboardConfig({
+          automl: false,
+          autorag: false,
+          genAiStudio: true,
+          disablePipelines: true,
+        }).spec;
+
+        [SupportedArea.PLUGIN_AUTOML, SupportedArea.PLUGIN_AUTORAG].forEach((area) => {
+          const result = isAreaAvailable(area, config, dscStatus, null);
+          expect(result.status).toBe(false);
+          expect(result.featureFlags).toMatchObject({ disablePipelines: 'off' });
+        });
+      });
+
+      it('should hide AutoML when Data Science Pipelines are removed', () => {
         const result = isAreaAvailable(
-          PLUGIN_AUTOML,
-          mockDashboardConfig({ automl: true }).spec,
+          SupportedArea.PLUGIN_AUTOML,
+          mockDashboardConfig({ automl: false, disablePipelines: false }).spec,
           mockDscStatus({
             components: {
               [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Removed' },
             },
           }),
           null,
-          { internalStateMap: stateMap, flagState: { automl: true, disablePipelines: false } },
         );
 
         expect(result.status).toBe(false);
-        expect(result.featureFlags).toEqual({ automl: 'on', disablePipelines: 'on' });
         expect(result.requiredComponents).toEqual({
           [DataScienceStackComponent.DS_PIPELINES]: false,
-        });
-      });
-
-      it('should disable AutoML and AutoRAG when pipelines are disabled', () => {
-        const config = mockDashboardConfig({
-          automl: true,
-          autorag: true,
-          genAiStudio: true,
-          disablePipelines: true,
-        }).spec;
-        const dscStatus = mockDscStatus({
-          components: {
-            [DataScienceStackComponent.DS_PIPELINES]: { managementState: 'Managed' },
-          },
-        });
-
-        [SupportedArea.PLUGIN_AUTOML, SupportedArea.PLUGIN_AUTORAG].forEach((area) => {
-          const result = isAreaAvailable(area, config, dscStatus, null);
-          expect(result.status).toBe(false);
-          expect(result.featureFlags).toMatchObject({ disablePipelines: 'off' });
         });
       });
     });

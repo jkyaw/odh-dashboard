@@ -13,39 +13,39 @@
   - Federated: BFF exposes API routes only; main ODH Dashboard hosts the UI.
 - **Data flow**: React → BFF (`/api/v1/...`) → Kubeflow Pipelines and/or Kubernetes → JSON to the UI.
 - **Local dev**: Without live endpoints, `cmd/main.go` can use in-memory mocks for Kubernetes and HTTP (KFP) clients.
-- **Module Federation**: Remote name `automl`; the dashboard exposes AutoML navigation and routes only when the dashboard flag and Data Science Pipelines area are available.
+- **Module Federation**: Remote name `automl`; the dashboard exposes AutoML navigation and routes when Data Science Pipelines are available and pipelines are enabled.
 
 ## GA Enablement And Compatibility
 
-AutoML enablement uses independent dashboard UI, module deployment, and pipeline-server gates. The dashboard flag defaults to enabled in 3.6. Existing explicit values are preserved, so a Tech Preview cluster with `automl: true` remains enabled and `automl: false` remains an opt-out.
+AutoML visibility uses the Data Science Pipelines component and the dashboard's pipelines setting. The legacy `automl` config field defaults to `false` and remains accepted for compatibility, but no longer controls the UI. Existing `automl: false` values therefore do not hide AutoML.
 
-| Gate | Behavior |
-| --- | --- |
-| `OdhDashboardConfig.spec.dashboardConfig.automl` | Defaults to `true`. An explicit `false` hides AutoML navigation and routes and prevents AutoML API requests from the UI. |
-| AutoML area extension | Requires the `automl` flag and `DataScienceStackComponent.DS_PIPELINES`; both the navigation item and route are gated by this area. |
-| `Dashboard.spec.modules.automl.state` | When the Dashboard is not `Removed`, the operator deploys `automl-ui` if there is no explicit `Disabled` override and `aipipelines` is `Managed` or `Unmanaged`. An explicit module disable takes precedence. |
-| Managed pipeline definitions | AutoML pipeline-server setup enables managed pipelines by default for newly configured servers. A dashboard upgrade does not modify existing DSPAs; an administrator must enable managed pipelines on an existing server if AutoML pipeline definitions are missing. |
-| Module sidecar | Sidecar deployment follows the operator module registry and `aipipelines` availability, independently of the dashboard `automl` UI flag. The UI opt-out suppresses AutoML UI/API requests while the sidecar may remain deployed. |
+| Gate                                             | Behavior                                                                                                                                                                                                                                                             |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OdhDashboardConfig.spec.dashboardConfig.automl` | Legacy field defaults to `false` and is retained for compatibility. The current dashboard ignores it for UI visibility.                                                                                                                                              |
+| AutoML area extension                            | Requires `disablePipelines: false` and `DataScienceStackComponent.DS_PIPELINES` to be `Managed` or `Unmanaged`; navigation and routes are gated by this area.                                                                                                        |
+| `Dashboard.spec.modules.automl.state`            | When the Dashboard is not `Removed`, the operator deploys `automl-ui` if there is no explicit `Disabled` override and `aipipelines` is `Managed` or `Unmanaged`. An explicit module disable takes precedence.                                                        |
+| Managed pipeline definitions                     | AutoML pipeline-server setup enables managed pipelines by default for newly configured servers. A dashboard upgrade does not modify existing DSPAs; an administrator must enable managed pipelines on an existing server if AutoML pipeline definitions are missing. |
+| Module sidecar                                   | Sidecar deployment follows the operator module registry and `aipipelines` availability, independently of dashboard UI visibility.                                                                                                                                    |
 
-AutoML GA does not migrate or rewrite existing AutoML configurations or AutoGluon InferenceService resources. The `automl` flag controls dashboard UI availability; Data Science Pipelines and managed pipeline definitions remain service prerequisites. This promotion does not change the shared `autox-core/services` library.
+AutoML GA does not migrate or rewrite existing AutoML configurations or AutoGluon InferenceService resources. Data Science Pipelines and managed pipeline definitions remain service prerequisites. This promotion does not change the shared `autox-core/services` library.
 
 ## Key Concepts
 
-| Term | Definition |
-|------|-----------|
-| **AutoML run** | A single optimization campaign: Kubeflow Pipeline experiments exploring parameter combinations for a dataset. |
-| **AutoGluon** | ML library that performs automated model selection and hyperparameter search within pipeline runs. |
-| **Optimal configuration** | Parameter set with the best evaluation metric across a campaign; candidate for model registration. |
-| **BFF** | Go backend-for-frontend: auth, cluster API proxy, static assets (non-federated). |
-| **Deployment mode** | `standalone`, `kubeflow`, or `federated` — controls theme, asset serving, and integration points. |
+| Term                      | Definition                                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **AutoML run**            | A single optimization campaign: Kubeflow Pipeline experiments exploring parameter combinations for a dataset. |
+| **AutoGluon**             | ML library that performs automated model selection and hyperparameter search within pipeline runs.            |
+| **Optimal configuration** | Parameter set with the best evaluation metric across a campaign; candidate for model registration.            |
+| **BFF**                   | Go backend-for-frontend: auth, cluster API proxy, static assets (non-federated).                              |
+| **Deployment mode**       | `standalone`, `kubeflow`, or `federated` — controls theme, asset serving, and integration points.             |
 
 ## Interactions
 
-| Dependency | Type | Details |
-|-----------|------|---------|
-| Kubeflow Pipelines | External API | BFF proxies experiment creation, run monitoring, and artifact retrieval. |
+| Dependency         | Type             | Details                                                                      |
+| ------------------ | ---------------- | ---------------------------------------------------------------------------- |
+| Kubeflow Pipelines | External API     | BFF proxies experiment creation, run monitoring, and artifact retrieval.     |
 | Main ODH Dashboard | Host application | Loads AutoML via Module Federation in federated mode; provides auth context. |
-| model-registry | Package | Registers optimal model configurations after a successful campaign. |
+| model-registry     | Package          | Registers optimal model configurations after a successful campaign.          |
 
 ## Known Issues / Gotchas
 

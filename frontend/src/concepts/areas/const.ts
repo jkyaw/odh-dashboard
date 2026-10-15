@@ -81,8 +81,6 @@ export const modelServingFlags = {
 export const advancedAIMLFlags = {
   genAiStudio: true,
   promptManagement: true,
-  automl: true,
-  autorag: true,
   disablePipelines: false,
   disableDistributedWorkloads: false,
   disableModelCatalog: false,
@@ -290,11 +288,11 @@ export const SupportedAreasStateMap: SupportedAreasState = {
     featureFlags: ['genAiStudio'],
   },
   [SupportedArea.PLUGIN_AUTOML]: {
-    featureFlags: ['automl', 'disablePipelines'],
+    featureFlags: ['disablePipelines'],
     requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
   },
   [SupportedArea.PLUGIN_AUTORAG]: {
-    featureFlags: ['autorag', 'disablePipelines'],
+    featureFlags: ['disablePipelines'],
     requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
     reliantAreas: [SupportedArea.PLUGIN_GEN_AI],
   },

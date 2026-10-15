@@ -6,7 +6,6 @@ import type {
 } from '@odh-dashboard/plugin-core/extension-points';
 
 const { PLUGIN_AUTOML } = SupportedArea;
-// AutoML requires automl feature flag.
 
 const extensions: (NavExtension | RouteExtension | AreaExtension)[] = [
   {
@@ -14,7 +13,7 @@ const extensions: (NavExtension | RouteExtension | AreaExtension)[] = [
     properties: {
       id: PLUGIN_AUTOML,
       requiredComponents: [DataScienceStackComponent.DS_PIPELINES],
-      featureFlags: ['automl', 'disablePipelines'],
+      featureFlags: ['disablePipelines'],
       reliantAreas: [],
     },
   },
@@ -34,7 +33,7 @@ const extensions: (NavExtension | RouteExtension | AreaExtension)[] = [
   {
     type: 'app.route',
     flags: {
-      required: [PLUGIN_AUTOML], // Route only available when AutoML feature flag is enabled
+      required: [PLUGIN_AUTOML],
     },
     properties: {
       path: '/develop-train/automl/*',

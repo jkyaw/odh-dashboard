@@ -152,10 +152,10 @@ spec:
                       description: 'When true, enables guardrails configuration for model deployments.'
                     autorag:
                       type: boolean
-                      description: 'When true, enables the AutoRAG (Automated Retrieval-Augmented Generation) features.'
+                      description: 'Legacy field retained for compatibility; no longer controls AutoRAG UI visibility.'
                     automl:
                       type: boolean
-                      description: 'When true, enables the AutoML (Automated Machine Learning) features.'
+                      description: 'Legacy field retained for compatibility; no longer controls AutoML UI visibility.'
                     modelAsService:
                       type: boolean
                       description: 'When true, enables Model-as-a-Service (MaaS) features for managed model deployments.'

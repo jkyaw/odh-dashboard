@@ -38,7 +38,8 @@ const DEFAULT_DOC_URL =
 type NewIn35Feature = {
   title: string;
   description: string;
-  flagName: string;
+  flagName?: string;
+  availabilityRequirements?: string;
   available: boolean;
 };
 
@@ -58,8 +59,8 @@ const useTourSteps = (isAdmin: boolean): TourStep[] => {
   const config = dashboardConfig.spec.dashboardConfig;
 
   const genAiAvailable = config.genAiStudio ?? false;
-  const automlAvailable = config.automl ?? false;
-  const autoragAvailable = (config.autorag ?? false) && genAiAvailable;
+  const automlAvailable = useIsAreaAvailable(SupportedArea.PLUGIN_AUTOML).status;
+  const autoragAvailable = useIsAreaAvailable(SupportedArea.PLUGIN_AUTORAG).status;
   const guardrailsAvailable = config.guardrails ?? false;
   const agentConfigAvailable = config.agentConfigManagement ?? false;
   const toolCallingAvailable = config.toolCalling ?? false;
@@ -177,7 +178,7 @@ const useTourSteps = (isAdmin: boolean): TourStep[] => {
           {
             title: 'AutoRAG',
             description: 'Build RAG pipelines and let the system find the best retrieval strategy.',
-            flagName: 'autorag',
+            availabilityRequirements: 'AutoRAG requires Data Science Pipelines and Gen AI Studio.',
             available: autoragAvailable,
           },
           {
@@ -226,7 +227,7 @@ const useTourSteps = (isAdmin: boolean): TourStep[] => {
             title: 'AutoML',
             description:
               'Train machine learning models using automated model selection, parameter optimization, and feature engineering.',
-            flagName: 'automl',
+            availabilityRequirements: 'AutoML requires Data Science Pipelines.',
             available: automlAvailable,
           },
         ],
@@ -675,6 +676,16 @@ const WhatsNewModalContent: React.FC = () => {
   const total = tourSteps.length;
   const learnMoreUrl = currentStep.docUrl ?? DEFAULT_DOC_URL;
   const unavailableFeatures = currentStep.newFeatures.filter((f) => !f.available);
+  const unavailableFeatureFlags = [
+    ...new Set(
+      unavailableFeatures.flatMap((feature) => (feature.flagName ? [feature.flagName] : [])),
+    ),
+  ];
+  const unavailableFeatureRequirements = unavailableFeatures.flatMap((feature) =>
+    feature.availabilityRequirements ? [feature.availabilityRequirements] : [],
+  );
+  const sectionFlagUnavailable = !currentStep.sectionAvailable && !!currentStep.sectionFlagName;
+  const hasFeatureFlagsToEnable = sectionFlagUnavailable || unavailableFeatureFlags.length > 0;
   const sectionUnavailable = !currentStep.sectionAvailable || !targetEl;
   const presentationType = targetEl ? 'popover' : 'modal';
 
@@ -754,22 +765,23 @@ const WhatsNewModalContent: React.FC = () => {
                 <ExclamationTriangleIcon color="var(--pf-t--global--color--nonstatus--orange--default)" />{' '}
                 {isAdmin ? (
                   <strong>
-                    To enable unavailable features in your cluster, enable the following feature
-                    flags in OdhDashboardConfig:
+                    {hasFeatureFlagsToEnable
+                      ? 'To enable unavailable features in your cluster, enable the following feature flags in OdhDashboardConfig:'
+                      : 'Some features require cluster components or areas that are not currently available.'}
                   </strong>
                 ) : (
                   <strong>
                     Contact your administrator to request access to unavailable features.
                   </strong>
                 )}
-                {isAdmin && (
+                {isAdmin && hasFeatureFlagsToEnable && (
                   <List>
                     {!currentStep.sectionAvailable && currentStep.sectionFlagName && (
                       <ListItem key={currentStep.sectionFlagName}>
                         <code>{currentStep.sectionFlagName}</code> (section)
                       </ListItem>
                     )}
-                    {[...new Set(unavailableFeatures.map((f) => f.flagName))].map((flagName) => (
+                    {unavailableFeatureFlags.map((flagName) => (
                       <ListItem key={flagName}>
                         {flagName.startsWith('disable') ? (
                           <>
@@ -779,6 +791,13 @@ const WhatsNewModalContent: React.FC = () => {
                           <code>{flagName}</code>
                         )}
                       </ListItem>
+                    ))}
+                  </List>
+                )}
+                {isAdmin && unavailableFeatureRequirements.length > 0 && (
+                  <List>
+                    {[...new Set(unavailableFeatureRequirements)].map((requirement) => (
+                      <ListItem key={requirement}>{requirement}</ListItem>
                     ))}
                   </List>
                 )}
